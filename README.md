@@ -1,0 +1,2 @@
+# Food-Truck-Business-Intelligence-Pipeline-dbt-Snowflake-
+This project establishes a robust, production-grade Analytics Engineering framework utilizing **dbt Cloud** and **Snowflake** to transform raw transactional data from the "Tasty Bytes" food truck dataset into clean, modeled, and tested business dimensions. The final data layer is fully optimized to feed analytical dashboards in Tableau Public.
