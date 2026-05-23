@@ -1,9 +1,9 @@
 # Food Truck Business Intelligence Pipeline (dbt + Snowflake)
 
-## 📌 Project Overview
+## Project Overview
 This project establishes a robust, production-grade Analytics Engineering framework utilizing **dbt Cloud** and **Snowflake** to transform raw transactional data from the "Tasty Bytes" food truck dataset into clean, modeled, and tested business dimensions. The final data layer is fully optimized to feed analytical dashboards in Tableau Public.
 
-## 🏗️ Data Architecture & Modeling Layers
+## Data Architecture & Modeling Layers
 I designed a synchronized, multi-layered data pipeline following industry-standard Kimball dimensional modeling principles to separate raw storage from business-facing data marts.
 
 ### 1. Staging Layer (`stg_`)
@@ -19,7 +19,7 @@ I designed a synchronized, multi-layered data pipeline following industry-standa
 
 ---
 
-## 🧪 Governance, Quality Control, and Automation
+## Governance, Quality Control, and Automation
 
 To transition this from a simple SQL script to an automated enterprise pipeline, I implemented automated testing and dependency management:
 
