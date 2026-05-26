@@ -21,9 +21,8 @@ I designed a synchronized, multi-layered data pipeline following industry-standa
 * Data Warehouse Layer (Snowflake): Raw, high-volume transactional logs from food truck point-of-sale (POS) systems were ingested and staged directly within a Snowflake data warehouse instance.
 
 * Transformation & Modeling Layer (dbt): Developed modular SQL data transformations using dbt (Data Build Tool) to implement business logic.
-  **Applied DATE_TRUNC and window functions to compute customer lifetime values and transactional aggregates.
-
-  **Materialized clean dimension and fact models (mart_monthly_orders, mart_customer_orders) optimized for analytical query performance.
+  *Applied DATE_TRUNC and window functions to compute customer lifetime values and transactional aggregates.
+  *Materialized clean dimension and fact models (mart_monthly_orders, mart_customer_orders) optimized for analytical query performance.
 
 * Business Intelligence Layer (Tableau): Established a downstream analytical semantic layer. For local repository deployment and portability, enterprise dbt marts were extracted into a Tableau Packaged Workbook (.twbx) to display executive KPIs, revenue distributions, and user-segmentation insights seamlessly without requiring live warehouse credential exposure.
 
