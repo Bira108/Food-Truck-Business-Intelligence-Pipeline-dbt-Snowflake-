@@ -1,0 +1,198 @@
+Food Truck Analysis:
+
+stg_orders.sql:
+
+
+{{config(materialized = 'table')}}
+
+WITH max_date_cte AS (
+    SELECT MAX(ORDER_TS) AS max_date
+    FROM TASTY_BYTES_SAMPLE_DATA.RAW_POS.ORDER_HEADER
+)
+SELECT
+    o.ORDER_ID AS order_id,
+    -- If CUSTOMER_ID is null, replace it with 0 so the test passes safely
+    COALESCE(o.CUSTOMER_ID, 0) AS customer_id,
+    o.ORDER_TOTAL AS total_price,   
+    o.ORDER_TS AS order_date
+FROM TASTY_BYTES_SAMPLE_DATA.RAW_POS.ORDER_HEADER o
+JOIN max_date_cte m
+    ON o.ORDER_TS >= DATEADD('day', -30, m.max_date)
+
+
+stg_lineitems.sql:
+
+
+{{ config(materialized = 'table')}}
+
+WITH max_date_cte AS (
+    SELECT MAX(ORDER_TS) AS max_date
+    FROM TASTY_BYTES_SAMPLE_DATA.RAW_POS.ORDER_HEADER
+)
+SELECT
+    d.ORDER_DETAIL_ID AS order_detail_id,
+    d.ORDER_ID AS order_id,
+    d.MENU_ITEM_ID AS menu_item_id,
+    d.QUANTITY AS quantity,
+    d.UNIT_PRICE AS unit_price,
+    d.PRICE AS line_price,
+    d.ORDER_ITEM_DISCOUNT_AMOUNT AS discount_amount,
+    h.ORDER_TS AS order_ts
+FROM TASTY_BYTES_SAMPLE_DATA.RAW_POS.ORDER_DETAIL d
+JOIN TASTY_BYTES_SAMPLE_DATA.RAW_POS.ORDER_HEADER h
+    ON d.ORDER_ID = h.ORDER_ID
+JOIN max_date_cte m
+    ON h.ORDER_TS >= DATEADD('day', -30, m.max_date)
+
+
+mart_customer_orders.sql:
+
+
+{{ config(materialized='table') }}
+
+SELECT
+    o.order_id,
+    o.customer_id,
+    o.total_price,
+    l.quantity,
+    l.menu_item_id
+FROM {{ ref('stg_orders') }} AS o
+JOIN {{ ref('stg_lineitems') }} AS l
+    ON o.order_id = l.order_id
+    
+
+
+mart_monthly_orders.sql
+
+
+{{ config(materialized='table') }}
+
+SELECT
+    DATE_TRUNC('month', o.order_date) AS order_month,
+    o.customer_id,
+    SUM(o.total_price) AS total_price,
+    SUM(l.quantity) AS total_quantity,
+    COUNT(o.order_id) AS total_orders
+FROM
+    {{ ref('stg_orders') }} AS o
+JOIN
+    {{ ref('stg_lineitems') }} AS l
+    ON o.order_id = l.order_id
+GROUP BY
+    1, 2
+
+
+recent_orders:
+
+-- incremental models --
+
+{{ config(materialized='incremental', unique_key='order_date') }}
+WITH recent_orders AS (
+    SELECT
+        DATE_TRUNC('day', DATEADD(year, 31, o.order_date)) AS order_date,
+        SUM(o.total_price) AS total_revenue,
+        COUNT(o.order_id) AS total_orders
+    FROM {{ ref('stg_orders') }} AS o
+    WHERE o.order_date <= CURRENT_DATE - INTERVAL '30 days'
+    GROUP BY 1
+)
+
+SELECT
+    order_date,
+    total_revenue,
+    total_orders
+FROM recent_orders
+{% if is_incremental() %}
+  WHERE order_date > (SELECT MAX(order_date) FROM {{ this }})
+{% endif %}
+ORDER BY order_date
+
+
+packages.yml:
+
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.2.1
+    
+schema.yml:
+
+
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Cleaned and filtered order header data covering a rolling 30-day window."
+    columns:
+      - name: order_id
+        description: "The primary key for this staging table."
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "The unique identifier of the customer who placed the order. Nulls are defaulted to 0."
+        tests:
+          - not_null
+
+  - name: stg_lineitems
+    description: "Cleaned and filtered order line item detail data linked to the order headers."
+    columns:
+      - name: order_detail_id
+        description: "The primary key for this staging detail table."
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "The foreign key connecting back to the stg_orders model."
+        tests:
+          - not_null
+
+  - name: mart_customer_orders
+    description: "Granular fact table joining daily customer orders with their individual line items."
+    columns:
+      - name: order_id
+        description: "The transaction identifier."
+      - name: customer_id
+        description: "The customer identifier."
+
+  - name: mart_monthly_orders
+    description: "Strategic summary mart aggregating financial totals and item quantities by customer and month."
+    columns:
+      - name: order_month
+        description: "The first day of the calendar month for the aggregated sales data."
+        tests:
+          - not_null
+
+  - name: recent_orders
+    description: "High-performance incremental model capturing daily revenue and order metrics for operational tracking."
+    columns:
+      - name: order_date
+        description: "The primary key (date) for this daily summary table."
+        tests:
+          - unique
+          - not_null
+
+
+test1.sql:
+
+WITH aggregated_data AS (
+    SELECT
+        DATE_TRUNC('month', o.order_date) AS order_month,
+        o.customer_id,
+        SUM(o.total_price) AS total_price,
+        SUM(l.quantity) AS total_quantity,
+        COUNT(o.order_id) AS total_orders
+    FROM
+        {{ ref('stg_orders') }} AS o
+    JOIN
+        {{ ref('stg_lineitems') }} AS l
+        ON o.order_id = l.order_id
+    GROUP BY
+        1, 2
+)
+SELECT *
+FROM {{ ref('mart_monthly_orders')}}
+WHERE
+    total_price < 0 OR
+    total_price IS NULL OR
+    total_quantity IS NULL OR
+    total_orders = 0
