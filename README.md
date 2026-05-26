@@ -20,8 +20,7 @@ I designed a synchronized, multi-layered data pipeline following industry-standa
 ## Data Architecture & Pipeline Engineering
 * Data Warehouse Layer (Snowflake): Raw, high-volume transactional logs from food truck point-of-sale (POS) systems were ingested and staged directly within a Snowflake data warehouse instance.
   	* Transformation & Modeling Layer (dbt): Developed modular SQL data transformations using dbt (Data Build Tool) to implement business logic.
-
-		* Applied DATE_TRUNC and window functions to compute customer lifetime values and transactional aggregates.
+    * Applied DATE_TRUNC and window functions to compute customer lifetime values and transactional aggregates.
 * Materialized clean dimension and fact models (mart_monthly_orders, mart_customer_orders) optimized for analytical query performance.
 
 * Transformation & Modeling Layer (dbt): Developed modular SQL data transformations using dbt (Data Build Tool) to implement business logic.
