@@ -35,3 +35,15 @@ To transition this from a simple SQL script to an automated enterprise pipeline,
 * **Automated Schema Testing (`schema.yml`)**: Enforced structural integrity rules across all staging and core business marts. The pipeline automatically fails and flags anomalies if any critical column breaches data quality thresholds:
     * `unique`: Validates that primary keys contain absolutely no duplicate transactions.
     * `not_null`: Ensures zero "ghost sales" can enter down-stream dashboards by guaranteeing identity fields are populated.
+
+## Business Insights & Analytics Narrative
+
+A diagnostic review of our **Total Revenue Captured ($123.9M)** revealed a critical operational dependency: **96.92 %** of total revenue originates from completely anonymous walk-up checkouts (tracked via system-default Customer ID 0).
+
+While this anonymous volume represents our baseline cash-flow stability, it leaves the business blind to individual retention patterns.
+
+By utilizing dbt modeling to isolate and filter out this operational baseline, the **VIP Loyalty Performance** matrix reveals our top true individual consumer accounts. For instance, our highest-value registered loyalty members contribute significant repeat business (e.g., Customer Account keys generating upward of $3,000+ across high-frequency purchase milestones).
+
+**Strategic Recommendation:** Marketing stakeholders should bypass generalized discounting and leverage these specific anonymized account keys to deploy targeted high-tier retention campaigns, maximizing the lifetime value of our known loyalty base while creating incentives to transition anonymous walk-ups into registered ecosystems.
+
+
