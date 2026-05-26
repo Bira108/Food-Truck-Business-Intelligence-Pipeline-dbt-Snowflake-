@@ -6,17 +6,6 @@ This project establishes a robust, production-grade Analytics Engineering framew
 ## Data Architecture & Modeling Layers
 I designed a synchronized, multi-layered data pipeline following industry-standard Kimball dimensional modeling principles to separate raw storage from business-facing data marts.
 
-## Data Architecture & Pipeline Engineering
-* Data Warehouse Layer (Snowflake): Raw, high-volume transactional logs from food truck point-of-sale (POS) systems were ingested and staged directly within a Snowflake data warehouse instance.
-
-* Transformation & Modeling Layer (dbt): Developed modular SQL data transformations using dbt (Data Build Tool) to implement business logic.
-
-* **Applied DATE_TRUNC and window functions to compute customer lifetime values and transactional aggregates.
-
-* **Materialized clean dimension and fact models (mart_monthly_orders, mart_customer_orders) optimized for analytical query performance.
-
-* Business Intelligence Layer (Tableau): Established a downstream analytical semantic layer. For local repository deployment and portability, enterprise dbt marts were extracted into a Tableau Packaged Workbook (.twbx) to display executive KPIs, revenue distributions, and user-segmentation insights seamlessly without requiring live warehouse credential exposure.
-
 ### 1. Staging Layer (`stg_`)
 * **`stg_orders`**: Extracts raw order headers, standardizes naming conventions, implements defensive programming via `COALESCE` to eliminate missing customer profiles, and restricts processing to a rolling 30-day development window to minimize warehouse compute costs.
 * **`stg_lineitems`**: Cleans individual transaction detail records, serving as the granular foundation for itemized sales tracking.
@@ -27,6 +16,16 @@ I designed a synchronized, multi-layered data pipeline following industry-standa
 
 ### 3. Performance Optimization Layer (Incremental Loading)
 * **`recent_orders`**: Implements an **Incremental Materialization Strategy** (`materialized='incremental'`). By utilizing the `is_incremental()` macro, this model dynamically scans the existing destination table for the maximum date and appends *only new data records* rather than rebuilding historical rows from scratch, drastically reducing Snowflake compute costs.
+
+## Data Architecture & Pipeline Engineering
+* Data Warehouse Layer (Snowflake): Raw, high-volume transactional logs from food truck point-of-sale (POS) systems were ingested and staged directly within a Snowflake data warehouse instance.
+
+* Transformation & Modeling Layer (dbt): Developed modular SQL data transformations using dbt (Data Build Tool) to implement business logic.
+* **Applied DATE_TRUNC** and window functions to compute customer lifetime values and transactional aggregates.
+
+* **Materialized** clean dimension and fact models (mart_monthly_orders, mart_customer_orders) optimized for analytical query performance.
+
+* Business Intelligence Layer (Tableau): Established a downstream analytical semantic layer. For local repository deployment and portability, enterprise dbt marts were extracted into a Tableau Packaged Workbook (.twbx) to display executive KPIs, revenue distributions, and user-segmentation insights seamlessly without requiring live warehouse credential exposure.
 
 ---
 
